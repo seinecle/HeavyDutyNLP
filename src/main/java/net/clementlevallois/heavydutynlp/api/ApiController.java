@@ -16,7 +16,7 @@ import java.util.TreeMap;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
-import net.clementlevallois.heavydutynlp.LemmatizerSpark;
+import net.clementlevallois.heavydutynlp.lemmatizing.LemmatizerSpark;
 
 public class ApiController {
 
