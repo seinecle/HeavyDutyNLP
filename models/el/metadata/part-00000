@@ -1,0 +1,1 @@
+{"class":"com.johnsnowlabs.nlp.annotators.LemmatizerModel","timestamp":1588686951721,"sparkVersion":"2.4.4","uid":"LEMMATIZER_f8e706d1f8a2","paramMap":{"inputCols":["token"],"outputCol":"lemma"},"defaultParamMap":{"lazyAnnotator":false}}
