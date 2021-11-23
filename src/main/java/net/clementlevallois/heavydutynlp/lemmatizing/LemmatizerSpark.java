@@ -43,6 +43,7 @@ public class LemmatizerSpark {
     private static SparkSession spark;
     private static String cacheFolder;
     private static String pathOnDisk;
+    private String lang;
 
     public static void initializeSpark() {
         Clock clock = new Clock("launching a spark session");
@@ -91,8 +92,8 @@ public class LemmatizerSpark {
         return inputs;
     }
 
-    public List<String> lemmatize(List<String> inputs, String lang) throws IOException {
-        if (inputs == null || lang == null) {
+    public List<String> lemmatize(List<String> inputs, String langParam) throws IOException {
+        if (inputs == null || langParam == null) {
             return inputs;
         }
         Clock totalClock = new Clock("total clock");
@@ -108,10 +109,15 @@ public class LemmatizerSpark {
         tokenizer.setOutputCol("token");
         String modelName;
 
-        if (lang.equals("en")) {
+        if (langParam.equals("en")) {
             modelName = "lemma_antbnc";
         } else {
             modelName = "lemma";
+        }
+        if (langParam.equals("no")){
+            lang = "nb";
+        }else{
+            lang = langParam;
         }
 
         LemmatizerModel lemmatizer;
@@ -181,12 +187,12 @@ public class LemmatizerSpark {
         List<String> text;
 
         text = new ArrayList();
-        text.add("étudiants étudiante");
-        text.add("études");
-        text.add("étudiez");
+        text.add("student");
+        text.add("studenter");
+        text.add("studentene");
 
         LemmatizerSpark.initializeSpark();
-        List<String> lemmatized = new LemmatizerSpark().lemmatize(text, "fr");
+        List<String> lemmatized = new LemmatizerSpark().lemmatize(text, "nb");
 
         System.out.println("input: " + text.toString());
         System.out.println("output: " + lemmatized.toString());
