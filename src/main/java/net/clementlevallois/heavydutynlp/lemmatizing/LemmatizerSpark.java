@@ -14,20 +14,21 @@ import com.johnsnowlabs.nlp.Finisher;
 import com.johnsnowlabs.nlp.annotators.LemmatizerModel;
 import com.johnsnowlabs.nlp.annotators.Tokenizer;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.clementlevallois.heavydutynlp.config.Params;
+import net.clementlevallois.umigon.model.NGram;
 import net.clementlevallois.utils.Clock;
+import net.clementlevallois.utils.Multiset;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;
@@ -92,13 +93,79 @@ public class LemmatizerSpark {
         return inputs;
     }
 
+    public TreeMap<String, Integer> lemmatizeFromMultiset(TreeMap<String, Integer> inputs, String lang) throws IOException {
+        if (inputs == null || lang == null) {
+            return inputs;
+        }
+        List<String> originalTerms = new ArrayList();
+        for (Map.Entry<String, Integer> entry : inputs.entrySet()) {
+            originalTerms.add(entry.getKey());
+        }
+        List<String> lemmatizedTerms = lemmatize(originalTerms, lang);
+
+        TreeMap<String, Integer> results = new TreeMap();
+
+        int i = 0;
+        for (String termLemmatized : lemmatizedTerms) {
+            int indexOf = lemmatizedTerms.indexOf(termLemmatized);
+            String originalTerm = originalTerms.get(indexOf);
+            Integer freq = inputs.get(originalTerm);
+            results.put(termLemmatized, freq);
+        }
+        return results;
+    }
+
+    public Multiset<NGram> lemmatizeFromMultisetOfNGrams(Multiset<NGram> inputs, String lang) throws IOException {
+        if (inputs == null || lang == null) {
+            return inputs;
+        }
+
+        Multiset<NGram> results = new Multiset();
+        List<NGram> originalNgrams = new ArrayList();
+        for (NGram ngram : inputs.getElementSet()) {
+            originalNgrams.add(ngram);
+        }
+        List<String> originalTerms = new ArrayList();
+        for (NGram ngram : originalNgrams) {
+            originalTerms.add(ngram.getOriginalForm());
+        }
+        List<String> lemmatizedTerms = lemmatize(originalTerms, lang);
+
+        for (String termLemmatized : lemmatizedTerms) {
+            int indexOf = lemmatizedTerms.indexOf(termLemmatized);
+            NGram originalNgram = originalNgrams.get(indexOf);
+            originalNgram.setOriginalFormLemmatized(termLemmatized);
+            results.addSeveral(originalNgram, inputs.getCount(originalNgram));
+        }
+        return results;
+    }
+
+    public Map<Integer, String> lemmatizeFromMap(TreeMap<Integer, String> inputs, String lang) throws IOException {
+        if (inputs == null || lang == null) {
+            return inputs;
+        }
+
+        Map<Integer, String> results = new HashMap();
+        List<String> originalTerms = new ArrayList();
+        for (Map.Entry<Integer, String> entry : inputs.entrySet()) {
+            originalTerms.add(entry.getValue());
+        }
+        List<String> lemmatizedTerms = lemmatize(originalTerms, lang);
+
+        int i = 0;
+        for (Map.Entry<Integer, String> entry : inputs.entrySet()) {
+            results.put(entry.getKey(),lemmatizedTerms.get(i++));
+        }
+        return results;
+    }
+
     public List<String> lemmatize(List<String> inputs, String langParam) throws IOException {
         if (inputs == null || langParam == null) {
             return inputs;
         }
-        Clock totalClock = new Clock("total clock");
-
-        Clock clock = new Clock("creation of the pipe");
+//        Clock totalClock = new Clock("total clock");
+//
+//        Clock clock = new Clock("creation of the pipe");
         DocumentAssembler document = new DocumentAssembler();
         document.setInputCol("text");
         document.setOutputCol("document");
@@ -114,9 +181,9 @@ public class LemmatizerSpark {
         } else {
             modelName = "lemma";
         }
-        if (langParam.equals("no")){
+        if (langParam.equals("no")) {
             lang = "nb";
-        }else{
+        } else {
             lang = langParam;
         }
 
@@ -144,21 +211,21 @@ public class LemmatizerSpark {
 
         Pipeline pipeline = new Pipeline();
         pipeline.setStages(new PipelineStage[]{document, tokenizer, lemmatizer, finisher});
-        clock.closeAndPrintClock();
-
-        clock = new Clock("creating the dataset from the text");
+//        clock.closeAndPrintClock();
+//
+//        clock = new Clock("creating the dataset from the text");
         Dataset<Row> data = spark.createDataset(inputs, Encoders.STRING()).toDF("text");
-        clock.closeAndPrintClock();
+//        clock.closeAndPrintClock();
 
-        clock = new Clock("fitting the data");
+//        clock = new Clock("fitting the data");
         PipelineModel pipelineModel = pipeline.fit(data);
-        clock.closeAndPrintClock();
-
-        clock = new Clock("transforming the data");
+//        clock.closeAndPrintClock();
+//
+//        clock = new Clock("transforming the data");
         Dataset<Row> transformed = pipelineModel.transform(data);
-        clock.closeAndPrintClock();
-
-        clock = new Clock("exporting the results");
+//        clock.closeAndPrintClock();
+//
+//        clock = new Clock("exporting the results");
         transformed.selectExpr("explode(finished_lemma)");
         List<Row> rows = transformed.selectExpr("finished_lemma").collectAsList();
         List<String> results = new ArrayList();
@@ -175,8 +242,8 @@ public class LemmatizerSpark {
             }
             results.add(sb.toString().trim());
         }
-        clock.closeAndPrintClock();
-        totalClock.closeAndPrintClock();
+//        clock.closeAndPrintClock();
+//        totalClock.closeAndPrintClock();
 
         return results;
 

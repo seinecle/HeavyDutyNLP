@@ -14,8 +14,14 @@
         <dependency>
             <groupId>io.javalin</groupId>
             <artifactId>javalin</artifactId>
-            <version>4.1.1</version>
-        </dependency>        
+            <version>5.4.2</version>
+        </dependency>
+        <dependency>
+            <groupId>net.clementlevallois.functions</groupId>
+            <artifactId>umigon-model</artifactId>
+            <version>1.0</version>
+            <type>jar</type>
+        </dependency>
         <dependency>
             <groupId>javax</groupId>
             <artifactId>javaee-api</artifactId>
@@ -44,8 +50,8 @@
             <version>3.1.1</version>
         </dependency>
         <dependency>
-            <groupId>net.clementlevallois</groupId>
-            <artifactId>utils</artifactId>
+            <groupId>net.clementlevallois.utils</groupId>
+            <artifactId>utils-core</artifactId>
             <version>1.0</version>
             <type>jar</type>
         </dependency>
