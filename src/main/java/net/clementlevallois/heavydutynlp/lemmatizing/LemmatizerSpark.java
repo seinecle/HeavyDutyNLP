@@ -140,7 +140,7 @@ public class LemmatizerSpark {
         return results;
     }
 
-    public Map<Integer, String> lemmatizeFromMap(TreeMap<Integer, String> inputs, String lang) throws IOException {
+    public Map<Integer, String> lemmatizeFromMap(TreeMap<Integer, String> inputs, String lang) {
         if (inputs == null || lang == null) {
             return inputs;
         }
@@ -159,7 +159,7 @@ public class LemmatizerSpark {
         return results;
     }
 
-    public List<String> lemmatize(List<String> inputs, String langParam) throws IOException {
+    public List<String> lemmatize(List<String> inputs, String langParam) {
         if (inputs == null || langParam == null) {
             return inputs;
         }
@@ -198,13 +198,18 @@ public class LemmatizerSpark {
             File f = new File(pathOnDisk);
             String[] list = f.list((dir, name) -> name.startsWith("lemma_" + lang));
             if (list.length > 0) {
-                copyDirectory(pathOnDisk + File.separator + list[0], pathOfModelOnDiskAsString);
-                deleteDirectory(Path.of(pathOnDisk + File.separator + list[0]).toFile());
+                try {
+                    copyDirectory(pathOnDisk + File.separator + list[0], pathOfModelOnDiskAsString);
+                    deleteDirectory(Path.of(pathOnDisk + File.separator + list[0]).toFile());
+                } catch (IOException ex) {
+                    Logger.getLogger(LemmatizerSpark.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
 
         } else {
             System.out.println("lemma model for " + lang + " found on disk, loading it directly!");
-            lemmatizer = (LemmatizerModel) LemmatizerModel.load(cacheFolder + File.separator + lang);
+            String pathModelToLoad = cacheFolder + File.separator + lang;
+            lemmatizer = (LemmatizerModel) LemmatizerModel.load(pathModelToLoad);
         }
         Finisher finisher = new Finisher();
         finisher.setInputCols(new String[]{"lemma"});

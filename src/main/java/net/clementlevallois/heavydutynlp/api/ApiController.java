@@ -28,14 +28,14 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import net.clementlevallois.heavydutynlp.lemmatizing.LemmatizerSpark;
-import net.clementlevallois.umigon.model.NGram;
-import net.clementlevallois.utils.Multiset;
 
 public class ApiController {
 
     public static void main(String[] args) {
-        Javalin app = Javalin.create().start(7000);
-        System.out.println("running the api");
+        Javalin app = Javalin.create(config -> {
+            config.http.maxRequestSize = 1000000000;
+        }).start(7000);
+        System.out.println("running the heavy duty nlp api");
         LemmatizerSpark.initializeSpark();
 
         app.post("/lemmatize/{lang}", ctx -> {
@@ -98,7 +98,6 @@ public class ApiController {
                     oos.writeObject(lemmatizedFromMap);
                     oos.flush();
                     byte[] data = bos.toByteArray();
-
                     ctx.result(data).status(HttpStatus.OK);
                 } catch (IOException ex) {
                     Logger.getLogger(ApiController.class.getName()).log(Level.SEVERE, null, ex);
